@@ -1,7 +1,7 @@
 {
     "config":{
-        "ysoserialPath":"ysoserial-0.0.6-SNAPSHOT-all.jar",
-        "javaBinPath":"java",
+        "ysoserialPath":"../ysoserial-0.0.6-SNAPSHOT-all.jar",
+        "javaBinPath":"D:\\language\\jdks\\jdk8u391\\bin\\java.exe",
         "fileOutputDir":"./fileOutput/",
         "displayFileContentOnScreen":true,
         "saveToFile":true
@@ -17,6 +17,10 @@
         "__defaultFiles":["/etc/hosts","c:\\windows\\system32\\drivers\\etc\\hosts"]
     },
     "yso":{
-        "Jdk7u21":["Jdk7u21","calc"]
+        "Jdk7u21":["Jdk7u21","calc"],
+        "urldns":["URLDNS","http://j97j6b.dnslog.cn"]
+    },
+    "ser":{
+        "jackson":"../jackson.ser"
     }
 }

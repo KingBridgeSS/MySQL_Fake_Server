@@ -48,16 +48,14 @@ class MysqlPacketReader:
         if l < 0xffffff:
             self.__follow = False
 
-    @asyncio.coroutine
-    def close(self):
-        while (yield from self.read()):
+    async def close(self):
+        while (await self.read()):
             pass
 
-    @asyncio.coroutine
-    def read(self, size=None):
+    async def read(self, size=None):
         if not self.__length:
             if self.__follow:
-                ldata = yield from self._stream.read(4)
+                ldata = await self._stream.read(4)
                 self._check_lead(ldata)
             else:
                 return ''
@@ -65,7 +63,7 @@ class MysqlPacketReader:
         if not size or size >= self.__length:
             size = self.__length
 
-        data = yield from self._stream.read(size)
+        data = await self._stream.read(size)
         self.__length -= len(data)
         return data
 
@@ -91,9 +89,8 @@ class MysqlStreamWriter:
     def close(self):
         self._inner.close()
 
-    @asyncio.coroutine
-    def drain(self):
-        return self._inner.drain()
+    async def drain(self):
+        return await self._inner.drain()
 
     def reset(self):
         self._seq.reset()
@@ -110,17 +107,15 @@ class MysqlStreamWriter:
         return self._inner.get_extra_info(key)
 
 
-@asyncio.coroutine
-def start_mysql_server(client_connected_cb, host=None, port=None, **kwds):
-    @asyncio.coroutine
-    def cb(reader, writer):
+async def start_mysql_server(client_connected_cb, host=None, port=None, **kwds):
+    async def cb(reader, writer):
         seq = _MysqlStreamSequence()
         reader_m = MysqlStreamReader(reader, seq)
         writer_m = MysqlStreamWriter(writer, seq)
-        return client_connected_cb(reader_m, writer_m)
+        return await client_connected_cb(reader_m, writer_m)
     # ssl_context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
     # ssl_context.load_verify_locations('pymotw.crt')
 
     # ssl_context.check_hostname = False
     # #ssl_context.load_cert_chain('pymotw.crt', 'pymotw.key')
-    return asyncio.start_server(cb, host, port, **kwds)
+    return await asyncio.start_server(cb, host, port, **kwds)

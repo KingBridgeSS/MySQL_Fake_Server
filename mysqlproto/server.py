@@ -13,35 +13,32 @@ class MysqlServer:
     def __init__(self, reader, writer):
         self.reader, self.writer = reader, writer
 
-    @asyncio.coroutine
-    def __iter__(self):
+    async def __iter__(self):
         exc = None
 
-        info = yield from self.do_handshake()
-        yield from self.connection_made(*info)
+        info = await self.do_handshake()
+        await self.connection_made(*info)
 
         try:
-            yield from self.do_commands()
+            await self.do_commands()
         except Exception as e:
             exc = e
             pass
 
-        yield from self.connection_lost(exc)
+        await self.connection_lost(exc)
 
     @classmethod
     def factory(cls, *args, **kw):
-        @asyncio.coroutine
-        def cb(reader, writer):
-            yield from cls(reader, writer, *args, **kw)
+        async def cb(reader, writer):
+            await cls(reader, writer, *args, **kw)
         return cb
 
-    @asyncio.coroutine
-    def do_handshake(self):
+    async def do_handshake(self):
         handshake = HandshakeV10()
         handshake.write(self.writer)
-        yield from self.writer.drain()
+        await self.writer.drain()
 
-        handshake_response = yield from HandshakeResponse41.read(self.reader.packet(), handshake.capability)
+        handshake_response = await HandshakeResponse41.read(self.reader.packet(), handshake.capability)
 
         self.status = handshake.status
         self.capability = handshake_response.capability_effective
@@ -49,30 +46,29 @@ class MysqlServer:
         if (Capability.PLUGIN_AUTH in self.capability and
             handshake.auth_plugin != handshake_response.auth_plugin):
             AuthSwitchRequest().write(self.writer)
-            yield from self.writer.drain()
+            await self.writer.drain()
 
-            auth_response = yield from self.reader.packet().read()
+            auth_response = await self.reader.packet().read()
 
         result = OK(self.capability, handshake.status)
         result.write(self.writer)
-        yield from self.writer.drain()
+        await self.writer.drain()
 
         return handshake_response.user, handshake_response.schema
 
-    @asyncio.coroutine
-    def do_commands(self):
+    async def do_commands(self):
         while True:
             result = None
             self.writer.reset()
             packet = self.reader.packet()
 
             try:
-                cmd = (yield from packet.read(1))[0]
+                cmd = (await packet.read(1))[0]
 
                 if cmd == 1:
                     return
                 elif cmd == 3:
-                    result = yield from self.query(packet)
+                    result = await self.query(packet)
                 else:
                     result = ERR(self.capability)
 
@@ -84,10 +80,10 @@ class MysqlServer:
                 result = ERR(self.capability, error_msg='{}: {}'.format(e.__class__.__name__, e))
 
             finally:
-                yield from packet.close()
+                await packet.close()
 
             result.write(self.writer)
-            yield from self.writer.drain()
+            await self.writer.drain()
 
     def connection_made(self, user, schema):
         yield

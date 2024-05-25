@@ -1,4 +1,22 @@
 # MySQL Fake Server
+
+原项目https://github.com/fnmsd/MySQL_Fake_Server
+
+在原版的基础上做了如下修改：
+
+- 更新了语法以适配 python3.12 asyncio API
+- 打jdbc反序列化的时候可以自定义序列化数据（见config.json）
+
+```json
+   	"ser":{
+        "jackson":"../jackson.ser"
+    }
+```
+
+则请求：`jdbc:mysql://127.0.0.1:3306/test?autoDeserialize=true&queryInterceptors=com.mysql.cj.jdbc.interceptors.ServerStatusDiffInterceptor&user=ser_jackson`
+
+## 原项目说明
+
 [ENGLISH](README_EN.md)|简体中文
 
 用于渗透测试过程中的假MySQL服务器，纯原生python3实现，不依赖其它包。

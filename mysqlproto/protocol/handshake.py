@@ -59,9 +59,8 @@ class HandshakeResponse41:
         self.capability = CapabilitySet()
 
     @classmethod
-    @asyncio.coroutine
-    def read(cls, packet, capability_announced):
-        data = yield from packet.read()
+    async def read(cls, packet, capability_announced):
+        data = await packet.read()
 
         ret = cls()
 
